@@ -1,0 +1,13 @@
+# build output
+frogHopper_executable
+
+# compiled objects and binaries
+*.o
+*.obj
+*.a
+*.so
+a.out
+
+# debugger artifacts
+*.dSYM/
+core
