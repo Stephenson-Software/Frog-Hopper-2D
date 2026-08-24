@@ -7,10 +7,31 @@
 #include "header/Vehicle.h"
 
 FrogHopper::FrogHopper() {
-	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		std::cout << "SDL could not initialize: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	gWindow = SDL_CreateWindow("Frog Hopper", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	if (gWindow == NULL) {
+		std::cout << "Window could not be created: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	
+	if (gRenderer == NULL) {
+		std::cout << "Renderer could not be created: " << SDL_GetError() << std::endl;
+		return;
+	}
+
+	// resolve the assets against the directory holding the executable, so the game can be
+	// launched from any working directory
+	char* basePath = SDL_GetBasePath();
+	if (basePath != NULL) {
+		assetPath = std::string(basePath) + "resources/";
+		SDL_free(basePath);
+	}
+
 	// initialize objects
 	frog.init(frogX, frogY, frogW, frogH);	
 	bottomCarRight.init(-200, 550, 200, 100, 6, -200);
@@ -20,29 +41,48 @@ FrogHopper::FrogHopper() {
 	
 	//  initialize PNG loading
 	int imgFlags = IMG_INIT_PNG;
-	IMG_Init(imgFlags);
+	if ((IMG_Init(imgFlags) & imgFlags) != imgFlags) {
+		std::cout << "SDL_image could not initialize: " << IMG_GetError() << std::endl;
+		return;
+	}
+
+	initialized = true;
 }
 
-void FrogHopper::loadMedia() {
-	SDL_Surface* temp_surface;
-	temp_surface = IMG_Load("../resources/background.png");
-	background = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
-	temp_surface = IMG_Load("../resources/frog.png");
-	SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
-	frogTexture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
-	temp_surface = IMG_Load("../resources/carRight.png");
-	SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
-	carRightTexture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
-	temp_surface = IMG_Load("../resources/carLeft.png");
-	SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
-	carLeftTexture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
-	temp_surface = IMG_Load("../resources/playerLose.png");
-	SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
-	loseTexture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
-	temp_surface = IMG_Load("../resources/playerWin.png");
-	SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
-	winTexture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
+// loads one asset into a texture, keying out cyan where the asset needs transparency
+SDL_Texture* FrogHopper::loadTexture(std::string fileName, bool useColorKey) {
+	std::string path = assetPath + fileName;
+
+	SDL_Surface* temp_surface = IMG_Load(path.c_str());
+	if (temp_surface == NULL) {
+		std::cout << "Could not load " << path << ": " << IMG_GetError() << std::endl;
+		return NULL;
+	}
+
+	if (useColorKey) {
+		SDL_SetColorKey(temp_surface, SDL_TRUE, SDL_MapRGB(temp_surface->format, 0, 0xFF, 0xFF));
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
+	if (texture == NULL) {
+		std::cout << "Could not create a texture from " << path << ": " << SDL_GetError() << std::endl;
+	}
+
 	SDL_FreeSurface(temp_surface);
+	return texture;
+}
+
+// returns false if any asset failed to load
+bool FrogHopper::loadMedia() {
+	background = loadTexture("background.png", false);
+	frogTexture = loadTexture("frog.png", true);
+	carRightTexture = loadTexture("carRight.png", true);
+	carLeftTexture = loadTexture("carLeft.png", true);
+	loseTexture = loadTexture("playerLose.png", true);
+	winTexture = loadTexture("playerWin.png", true);
+
+	return background != NULL && frogTexture != NULL && carRightTexture != NULL &&
+		carLeftTexture != NULL && loseTexture != NULL && winTexture != NULL;
 }
 
 void FrogHopper::cleanUp() {
@@ -180,7 +220,18 @@ void FrogHopper::winScreen() {
 
 int main(int argc, char* args[]) {
 	FrogHopper frogHopper;
-	frogHopper.loadMedia();
+	if (!frogHopper.initialized) {
+		std::cout << "Frog Hopper could not start up." << std::endl;
+		frogHopper.cleanUp();
+		return 1;
+	}
+
+	if (!frogHopper.loadMedia()) {
+		std::cout << "Frog Hopper could not load its assets." << std::endl;
+		frogHopper.cleanUp();
+		return 1;
+	}
+
 	frogHopper.gameScreen();
 	frogHopper.cleanUp();
 	return 0;
