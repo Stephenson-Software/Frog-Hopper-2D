@@ -11,7 +11,8 @@
 class FrogHopper {
     public:
         FrogHopper();
-        void loadMedia();
+        SDL_Texture* loadTexture(std::string fileName, bool useColorKey);
+        bool loadMedia();
         void cleanUp();
         bool checkCollision(SDL_Rect a, SDL_Rect b);
         void renderScene();
@@ -23,13 +24,19 @@ class FrogHopper {
         SDL_Window* gWindow = NULL;
         SDL_Renderer* gRenderer = NULL;
 
+        // false until the window, the renderer and PNG loading are all ready
+        bool initialized = false;
+
+        // directory the assets are read from, resolved from the location of the executable
+        std::string assetPath = "resources/";
+
         // textures
-        SDL_Texture* background;
-        SDL_Texture* frogTexture;
-        SDL_Texture* carRightTexture;
-        SDL_Texture* carLeftTexture;
-        SDL_Texture* loseTexture;
-        SDL_Texture* winTexture;
+        SDL_Texture* background = NULL;
+        SDL_Texture* frogTexture = NULL;
+        SDL_Texture* carRightTexture = NULL;
+        SDL_Texture* carLeftTexture = NULL;
+        SDL_Texture* loseTexture = NULL;
+        SDL_Texture* winTexture = NULL;
 
         // objects
         Frog frog;
