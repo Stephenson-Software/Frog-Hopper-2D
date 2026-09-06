@@ -179,8 +179,10 @@ void FrogHopper::gameScreen() {
 	}
 }
 
-// shows the lose screen until a key is pressed or the window is closed,
-// returning false only when the window was closed
+// shows the lose screen until a key is released or the window is closed,
+// returning false only when the window was closed. dismissing on the key release
+// rather than the key press keeps the matching SDL_KEYUP out of gameScreen(), where
+// Frog::handleEvent() would read it as a movement key and leave the frog drifting
 bool FrogHopper::loseScreen() {
 	frog.ypos = 675;
 	bool showing = true;
@@ -192,7 +194,7 @@ bool FrogHopper::loseScreen() {
 				showing = false;
 				running = false;
 			}
-			if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+			if (e.type == SDL_KEYUP && e.key.repeat == 0) {
 				showing = false;
 			}
 		}
@@ -205,8 +207,10 @@ bool FrogHopper::loseScreen() {
 	return running;
 }
 
-// shows the win screen until a key is pressed or the window is closed,
-// returning false only when the window was closed
+// shows the win screen until a key is released or the window is closed,
+// returning false only when the window was closed. dismissing on the key release
+// rather than the key press keeps the matching SDL_KEYUP out of gameScreen(), where
+// Frog::handleEvent() would read it as a movement key and leave the frog drifting
 bool FrogHopper::winScreen() {
 	frog.ypos = 675;
 	bool showing = true;
@@ -218,7 +222,7 @@ bool FrogHopper::winScreen() {
 				showing = false;
 				running = false;
 			}
-			if (ev.type == SDL_KEYDOWN && ev.key.repeat == 0) {
+			if (ev.type == SDL_KEYUP && ev.key.repeat == 0) {
 				showing = false;
 			}
 		}
