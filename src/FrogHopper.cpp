@@ -136,12 +136,9 @@ void FrogHopper::renderScene() {
 	topCarLeft.render(gRenderer, carRightTexture, carLeftTexture, "left");
 }
 
+// true once the frog has risen past the top of the window
 bool FrogHopper::checkWin() {
-	if (frog.ypos < -75) {
-		winScreen();
-		return true;
-	}
-	return false;
+	return frog.ypos < -75;
 }
 
 void FrogHopper::gameScreen() {
@@ -165,7 +162,7 @@ void FrogHopper::gameScreen() {
 		checkCollision(frog.collider, topCarRight.collider)) {
 			frog.xvel = 0;
 			frog.yvel = 0;
-			loseScreen();
+			running = loseScreen();
 		}
 
 		bottomCarRight.move(SCREEN_WIDTH);
@@ -173,22 +170,30 @@ void FrogHopper::gameScreen() {
 		bottomCarLeft.move(SCREEN_WIDTH);
 		topCarLeft.move(SCREEN_WIDTH);
 		
-		checkWin();
+		if (running && checkWin()) {
+			frog.xvel = 0;
+			frog.yvel = 0;
+			running = winScreen();
+		}
 		SDL_RenderPresent(gRenderer);
 	}
 }
 
-void FrogHopper::loseScreen() {
+// shows the lose screen until a key is pressed or the window is closed,
+// returning false only when the window was closed
+bool FrogHopper::loseScreen() {
 	frog.ypos = 675;
 	bool showing = true;
+	bool running = true;
 	SDL_Event e;
 	while (showing) {
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) {
-				cleanUp();
+				showing = false;
+				running = false;
 			}
 			if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-				cleanUp();
+				showing = false;
 			}
 		}
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -196,19 +201,25 @@ void FrogHopper::loseScreen() {
 		SDL_RenderCopy(gRenderer, loseTexture, NULL, NULL);
 		SDL_RenderPresent(gRenderer);
 	}
+
+	return running;
 }
 
-void FrogHopper::winScreen() {
+// shows the win screen until a key is pressed or the window is closed,
+// returning false only when the window was closed
+bool FrogHopper::winScreen() {
 	frog.ypos = 675;
 	bool showing = true;
+	bool running = true;
 	SDL_Event ev;
 	while (showing) {
 		while (SDL_PollEvent(&ev)) {
 			if (ev.type == SDL_QUIT) {
-				cleanUp();
+				showing = false;
+				running = false;
 			}
 			if (ev.type == SDL_KEYDOWN && ev.key.repeat == 0) {
-				cleanUp();
+				showing = false;
 			}
 		}
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -216,6 +227,8 @@ void FrogHopper::winScreen() {
 		SDL_RenderCopy(gRenderer, winTexture, NULL, NULL);
 		SDL_RenderPresent(gRenderer);
 	}
+
+	return running;
 }
 
 int main(int argc, char* args[]) {
