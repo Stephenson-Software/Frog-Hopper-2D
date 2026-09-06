@@ -10,6 +10,9 @@ Vehicle::Vehicle() {
 	ypos = 0;
 	width = 0;
 	height = 0;
+	xvel = 0;
+	initialX = 0;
+	collider = {0, 0, 0, 0};
 }
 
 void Vehicle::render(SDL_Renderer* gRenderer, SDL_Texture* carRightTexture, SDL_Texture* carLeftTexture, std::string direction) {

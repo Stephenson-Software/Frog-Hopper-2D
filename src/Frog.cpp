@@ -12,6 +12,7 @@ Frog::Frog() {
 	height = 0;
 	xvel = 0;
 	yvel = 0;
+	collider = {0, 0, 0, 0};
 }
 
 void Frog::render(SDL_Renderer* gRenderer, SDL_Texture* frogTexture) {
