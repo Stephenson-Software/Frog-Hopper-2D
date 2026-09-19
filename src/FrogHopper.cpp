@@ -32,12 +32,12 @@ FrogHopper::FrogHopper() {
 		SDL_free(basePath);
 	}
 
-	// initialize objects
+	// initialize objects, each car as (x, y, w, h, xspeed, respawn x)
 	frog.init(frogX, frogY, frogW, frogH);	
-	bottomCarRight.init(-200, 550, 200, 100, 6, -200);
-	topCarRight.init(500, 200, 200, 100, 7, -200);
-	bottomCarLeft.init(400, 450, 200, 100, -8, SCREEN_WIDTH);
-	topCarLeft.init(200, 100, 200, 100, -9, SCREEN_WIDTH);
+	bottomCarRight.init(CAR_RIGHT_RESPAWN_X, 550, CAR_WIDTH, CAR_HEIGHT, BOTTOM_CAR_RIGHT_SPEED, CAR_RIGHT_RESPAWN_X);
+	topCarRight.init(500, 200, CAR_WIDTH, CAR_HEIGHT, TOP_CAR_RIGHT_SPEED, CAR_RIGHT_RESPAWN_X);
+	bottomCarLeft.init(400, 450, CAR_WIDTH, CAR_HEIGHT, BOTTOM_CAR_LEFT_SPEED, CAR_LEFT_RESPAWN_X);
+	topCarLeft.init(200, 100, CAR_WIDTH, CAR_HEIGHT, TOP_CAR_LEFT_SPEED, CAR_LEFT_RESPAWN_X);
 	
 	//  initialize PNG loading
 	int imgFlags = IMG_INIT_PNG;

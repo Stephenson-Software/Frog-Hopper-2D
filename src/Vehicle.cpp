@@ -40,7 +40,7 @@ void Vehicle::move(const int SCREEN_WIDTH) {
 	collider.x = xpos;
 	
 	// if too far left or right
-	if ((xpos < -200) || (xpos + width > SCREEN_WIDTH + 200)) {
+	if ((xpos < -OFFSCREEN_MARGIN) || (xpos + width > SCREEN_WIDTH + OFFSCREEN_MARGIN)) {
 		// move to initial x
 		xpos = initialX;
 		collider.x = xpos;
