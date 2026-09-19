@@ -53,6 +53,20 @@ class FrogHopper {
 
         const int SCREEN_WIDTH = 1000;
         const int SCREEN_HEIGHT = 750;
+
+        // lane geometry. every car is the same size, and CAR_WIDTH must not exceed
+        // Vehicle::OFFSCREEN_MARGIN. cars travelling right respawn off the left edge and
+        // cars travelling left respawn off the right edge
+        const int CAR_WIDTH = 200;
+        const int CAR_HEIGHT = 100;
+        const int CAR_RIGHT_RESPAWN_X = -Vehicle::OFFSCREEN_MARGIN;
+        const int CAR_LEFT_RESPAWN_X = SCREEN_WIDTH;
+
+        // pixels per frame for each lane, negative moving left
+        const int BOTTOM_CAR_RIGHT_SPEED = 6;
+        const int TOP_CAR_RIGHT_SPEED = 7;
+        const int BOTTOM_CAR_LEFT_SPEED = -8;
+        const int TOP_CAR_LEFT_SPEED = -9;
 };
 
 #endif

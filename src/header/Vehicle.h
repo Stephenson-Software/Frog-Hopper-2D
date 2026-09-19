@@ -19,6 +19,10 @@ class Vehicle {
 	int xvel;
 	int initialX;
 	SDL_Rect collider;
+
+	// a car moves back to initialX once it is this far past either edge of the screen. it
+	// must be at least the car's width, or the car reappears before it has fully left
+	static const int OFFSCREEN_MARGIN = 200;
 };
 
 #endif
