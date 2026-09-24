@@ -1,0 +1,25 @@
+# The game has no test suite; this proves it still builds with the Makefile.
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Nothing here runs the game, but if a step ever does, it must not count
+    # as a use of it (see the README's "Usage reporting").
+    env:
+      TRACE_USAGE_REPORTING: "off"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDL2 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-image-dev
+      - name: Build (Makefile)
+        run: make
+      - name: Check the executable exists
+        run: test -x frogHopper_executable
