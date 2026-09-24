@@ -5,6 +5,7 @@
 #include "header/FrogHopper.h"
 #include "header/Frog.h"
 #include "header/Vehicle.h"
+#include "header/usageReporting.h"
 
 FrogHopper::FrogHopper() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -236,6 +237,11 @@ bool FrogHopper::winScreen() {
 }
 
 int main(int argc, char* args[]) {
+	// One startup event to trace, sent in the background; see
+	// header/usageReporting.h and the README's "Usage reporting" section.
+	usage_reporting::UsageReporter usageReporting;
+	usageReporting.reportStartup();
+
 	FrogHopper frogHopper;
 	if (!frogHopper.initialized) {
 		std::cout << "Frog Hopper could not start up." << std::endl;
