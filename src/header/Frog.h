@@ -10,7 +10,7 @@ class Frog {
   public:
 	Frog();
 	void render(SDL_Renderer* gRenderer, SDL_Texture* frogTexture);
-	void init(int x, int y, int w, int h);
+	void init(int x, int y, int w, int h, int s);
 	void handleEvent(SDL_Event &e);
 	void move(const int SCREEN_WIDTH, const int SCREEN_HEIGHT);
 	int xpos;
@@ -19,6 +19,7 @@ class Frog {
 	int height;
 	int xvel;
 	int yvel;
+	int speed;
 	SDL_Rect collider;
 };
 
