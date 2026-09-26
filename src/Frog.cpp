@@ -12,6 +12,7 @@ Frog::Frog() {
 	height = 0;
 	xvel = 0;
 	yvel = 0;
+	speed = 0;
 	collider = {0, 0, 0, 0};
 }
 
@@ -20,11 +21,12 @@ void Frog::render(SDL_Renderer* gRenderer, SDL_Texture* frogTexture) {
 	SDL_RenderCopy(gRenderer, frogTexture, NULL, &renderQuad);
 }
 
-void Frog::init(int x, int y, int w, int h) {
+void Frog::init(int x, int y, int w, int h, int s) {
 	xpos = x;
 	ypos = y;
 	width = w;
 	height = h;
+	speed = s;
 	collider = {x, y, w, h};
 }
 
@@ -32,16 +34,16 @@ void Frog::handleEvent(SDL_Event &e) {
 	if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
 		switch (e.key.keysym.sym) {
 			case SDLK_UP:
-				yvel -= 4;
+				yvel -= speed;
 				break;
 			case SDLK_DOWN:
-				yvel += 4;
+				yvel += speed;
 				break;
 			case SDLK_LEFT:
-				xvel -= 4;
+				xvel -= speed;
 				break;
 			case SDLK_RIGHT:
-				xvel += 4;
+				xvel += speed;
 				break;
 		}
 	}
@@ -49,16 +51,16 @@ void Frog::handleEvent(SDL_Event &e) {
 	if (e.type == SDL_KEYUP && e.key.repeat == 0) {
 		switch (e.key.keysym.sym) {
 			case SDLK_UP:
-				yvel += 4;
+				yvel += speed;
 				break;
 			case SDLK_DOWN:
-				yvel -= 4;
+				yvel -= speed;
 				break;
 			case SDLK_LEFT:
-				xvel += 4;
+				xvel += speed;
 				break;
 			case SDLK_RIGHT:
-				xvel -= 4;
+				xvel -= speed;
 				break;
 		}
 	}

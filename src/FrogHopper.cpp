@@ -34,7 +34,7 @@ FrogHopper::FrogHopper() {
 	}
 
 	// initialize objects, each car as (x, y, w, h, xspeed, respawn x)
-	frog.init(frogX, frogY, frogW, frogH);	
+	frog.init(frogX, frogY, frogW, frogH, frogSpeed);	
 	bottomCarRight.init(CAR_RIGHT_RESPAWN_X, 550, CAR_WIDTH, CAR_HEIGHT, BOTTOM_CAR_RIGHT_SPEED, CAR_RIGHT_RESPAWN_X);
 	topCarRight.init(500, 200, CAR_WIDTH, CAR_HEIGHT, TOP_CAR_RIGHT_SPEED, CAR_RIGHT_RESPAWN_X);
 	bottomCarLeft.init(400, 450, CAR_WIDTH, CAR_HEIGHT, BOTTOM_CAR_LEFT_SPEED, CAR_LEFT_RESPAWN_X);
