@@ -17,8 +17,7 @@ class FrogHopper {
         bool checkCollision(SDL_Rect a, SDL_Rect b);
         void renderScene();
         void gameScreen();
-        bool loseScreen();
-        bool winScreen();
+        bool endScreen(SDL_Texture* texture);
         bool checkWin();
 
         SDL_Window* gWindow = NULL;

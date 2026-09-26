@@ -163,7 +163,7 @@ void FrogHopper::gameScreen() {
 		checkCollision(frog.collider, topCarRight.collider)) {
 			frog.xvel = 0;
 			frog.yvel = 0;
-			running = loseScreen();
+			running = endScreen(loseTexture);
 		}
 
 		bottomCarRight.move(SCREEN_WIDTH);
@@ -174,18 +174,18 @@ void FrogHopper::gameScreen() {
 		if (running && checkWin()) {
 			frog.xvel = 0;
 			frog.yvel = 0;
-			running = winScreen();
+			running = endScreen(winTexture);
 		}
 		SDL_RenderPresent(gRenderer);
 	}
 }
 
-// shows the lose screen until a key is released or the window is closed,
+// shows an end screen (win or lose) until a key is released or the window is closed,
 // returning false only when the window was closed. dismissing on the key release
 // rather than the key press keeps the matching SDL_KEYUP out of gameScreen(), where
 // Frog::handleEvent() would read it as a movement key and leave the frog drifting
-bool FrogHopper::loseScreen() {
-	frog.ypos = 675;
+bool FrogHopper::endScreen(SDL_Texture* texture) {
+	frog.ypos = frogY;
 	bool showing = true;
 	bool running = true;
 	SDL_Event e;
@@ -201,35 +201,7 @@ bool FrogHopper::loseScreen() {
 		}
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 		SDL_RenderClear(gRenderer);
-		SDL_RenderCopy(gRenderer, loseTexture, NULL, NULL);
-		SDL_RenderPresent(gRenderer);
-	}
-
-	return running;
-}
-
-// shows the win screen until a key is released or the window is closed,
-// returning false only when the window was closed. dismissing on the key release
-// rather than the key press keeps the matching SDL_KEYUP out of gameScreen(), where
-// Frog::handleEvent() would read it as a movement key and leave the frog drifting
-bool FrogHopper::winScreen() {
-	frog.ypos = 675;
-	bool showing = true;
-	bool running = true;
-	SDL_Event ev;
-	while (showing) {
-		while (SDL_PollEvent(&ev)) {
-			if (ev.type == SDL_QUIT) {
-				showing = false;
-				running = false;
-			}
-			if (ev.type == SDL_KEYUP && ev.key.repeat == 0) {
-				showing = false;
-			}
-		}
-		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-		SDL_RenderClear(gRenderer);
-		SDL_RenderCopy(gRenderer, winTexture, NULL, NULL);
+		SDL_RenderCopy(gRenderer, texture, NULL, NULL);
 		SDL_RenderPresent(gRenderer);
 	}
 
