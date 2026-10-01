@@ -30,39 +30,14 @@ void Frog::init(int x, int y, int w, int h, int s) {
 	collider = {x, y, w, h};
 }
 
+// sets the velocity from the arrow keys held right now, rather than adding on each press
+// and subtracting on each release, so a release whose press never reached here (e.g. a key
+// held across an end screen) cannot leave the frog drifting
 void Frog::handleEvent(SDL_Event &e) {
-	if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
-		switch (e.key.keysym.sym) {
-			case SDLK_UP:
-				yvel -= speed;
-				break;
-			case SDLK_DOWN:
-				yvel += speed;
-				break;
-			case SDLK_LEFT:
-				xvel -= speed;
-				break;
-			case SDLK_RIGHT:
-				xvel += speed;
-				break;
-		}
-	}
-	
-	if (e.type == SDL_KEYUP && e.key.repeat == 0) {
-		switch (e.key.keysym.sym) {
-			case SDLK_UP:
-				yvel += speed;
-				break;
-			case SDLK_DOWN:
-				yvel -= speed;
-				break;
-			case SDLK_LEFT:
-				xvel += speed;
-				break;
-			case SDLK_RIGHT:
-				xvel -= speed;
-				break;
-		}
+	if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
+		const Uint8* keys = SDL_GetKeyboardState(NULL);
+		xvel = (keys[SDL_SCANCODE_RIGHT] - keys[SDL_SCANCODE_LEFT]) * speed;
+		yvel = (keys[SDL_SCANCODE_DOWN] - keys[SDL_SCANCODE_UP]) * speed;
 	}
 }
 

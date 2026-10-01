@@ -181,9 +181,7 @@ void FrogHopper::gameScreen() {
 }
 
 // shows an end screen (win or lose) until a key is released or the window is closed,
-// returning false only when the window was closed. dismissing on the key release
-// rather than the key press keeps the matching SDL_KEYUP out of gameScreen(), where
-// Frog::handleEvent() would read it as a movement key and leave the frog drifting
+// returning false only when the window was closed
 bool FrogHopper::endScreen(SDL_Texture* texture) {
 	frog.ypos = frogY;
 	bool showing = true;
