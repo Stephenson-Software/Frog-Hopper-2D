@@ -7,6 +7,17 @@
 #include "header/Vehicle.h"
 #include "header/usageReporting.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// In the browser (built with -sASYNCIFY, see web/build.sh) the game's loops would
+// never hand control back to the page, so each frame waits here for the next
+// animation frame, which also paces the game like vsync does natively.
+EM_ASYNC_JS(void, waitForNextFrame, (), {
+	await new Promise(function(resolve) { requestAnimationFrame(resolve); });
+});
+#endif
+
 FrogHopper::FrogHopper() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		std::cout << "SDL could not initialize: " << SDL_GetError() << std::endl;
@@ -177,6 +188,9 @@ void FrogHopper::gameScreen() {
 			running = endScreen(winTexture);
 		}
 		SDL_RenderPresent(gRenderer);
+#ifdef __EMSCRIPTEN__
+		waitForNextFrame();
+#endif
 	}
 }
 
@@ -201,6 +215,9 @@ bool FrogHopper::endScreen(SDL_Texture* texture) {
 		SDL_RenderClear(gRenderer);
 		SDL_RenderCopy(gRenderer, texture, NULL, NULL);
 		SDL_RenderPresent(gRenderer);
+#ifdef __EMSCRIPTEN__
+		waitForNextFrame();
+#endif
 	}
 
 	return running;
@@ -209,8 +226,11 @@ bool FrogHopper::endScreen(SDL_Texture* texture) {
 int main(int argc, char* args[]) {
 	// One startup event to trace, sent in the background; see
 	// header/usageReporting.h and the README's "Usage reporting" section.
+	// The browser build does not report: there is no curl or config directory there.
+#ifndef __EMSCRIPTEN__
 	usage_reporting::UsageReporter usageReporting;
 	usageReporting.reportStartup();
+#endif
 
 	FrogHopper frogHopper;
 	if (!frogHopper.initialized) {
