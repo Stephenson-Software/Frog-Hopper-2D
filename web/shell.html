@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Frog Hopper</title>
+<style>
+  :root { --bg: #f4f6f2; --fg: #1d2a1f; --muted: #5b6b5e; --pad: #dfe7dc; --pad-active: #b9cdb4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121813; --fg: #e3ebe4; --muted: #9aab9d; --pad: #243026; --pad-active: #3b4f3e; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 16px; text-align: center; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .hint { color: var(--muted); margin: 0 0 12px; font-size: 0.95rem; }
+  #canvas { display: block; width: 100% !important; height: auto !important;
+    aspect-ratio: 1000 / 750; margin: 0 auto; background: #000; outline: none; touch-action: none; }
+  #status { color: var(--muted); margin: 8px 0; min-height: 1.2em; }
+  #dpad { display: none; margin: 12px auto 0; width: 210px; grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(3, 70px); gap: 0; user-select: none; -webkit-user-select: none; }
+  #dpad button { font-size: 1.6rem; border: 0; border-radius: 14px; margin: 3px; background: var(--pad);
+    color: var(--fg); touch-action: none; -webkit-tap-highlight-color: transparent; }
+  #dpad button.held { background: var(--pad-active); }
+  #dpad .up { grid-column: 2; grid-row: 1; } #dpad .left { grid-column: 1; grid-row: 2; }
+  #dpad .right { grid-column: 3; grid-row: 2; } #dpad .down { grid-column: 2; grid-row: 3; }
+  @media (pointer: coarse) { #dpad { display: grid; } .keys-hint { display: none; } }
+  @media not (pointer: coarse) { .touch-hint { display: none; } }
+  footer { margin: 20px 0 8px; font-size: 0.9rem; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Frog Hopper</h1>
+  <p class="hint"><span class="keys-hint">Hold the arrow keys to hop the frog across the traffic to the top.</span><span class="touch-hint">Hold the arrows below to hop the frog across the traffic to the top.</span> Any key (or arrow) leaves the win/lose screen.</p>
+  <canvas id="canvas" width="1000" height="750" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="status">Loading…</div>
+  <div id="dpad" aria-label="On-screen arrow keys">
+    <button class="up" data-key="ArrowUp" data-code="38" aria-label="Up">▲</button>
+    <button class="left" data-key="ArrowLeft" data-code="37" aria-label="Left">◀</button>
+    <button class="right" data-key="ArrowRight" data-code="39" aria-label="Right">▶</button>
+    <button class="down" data-key="ArrowDown" data-code="40" aria-label="Down">▼</button>
+  </div>
+  <footer><a href="https://danielstephenson.dev/play">More by Daniel Stephenson → danielstephenson.dev/play</a></footer>
+</main>
+<script>
+  var statusEl = document.getElementById('status');
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    print: function (text) { console.log(text); },
+    printErr: function (text) { console.warn(text); },
+    setStatus: function (text) { statusEl.textContent = text; },
+    monitorRunDependencies: function (left) {
+      statusEl.textContent = left ? 'Loading…' : '';
+    },
+    onRuntimeInitialized: function () { statusEl.textContent = ''; }
+  };
+  window.addEventListener('error', function () { statusEl.textContent = 'Something went wrong; reload the page to try again.'; });
+
+  // The on-screen arrows send the same key events the keyboard does, so the game
+  // reads them exactly as it reads the arrow keys.
+  function sendKey(type, button) {
+    var code = Number(button.dataset.code);
+    var ev = new KeyboardEvent(type, { key: button.dataset.key, code: button.dataset.key, bubbles: true, cancelable: true });
+    Object.defineProperty(ev, 'keyCode', { get: function () { return code; } });
+    Object.defineProperty(ev, 'which', { get: function () { return code; } });
+    window.dispatchEvent(ev);
+  }
+  document.querySelectorAll('#dpad button').forEach(function (button) {
+    // A quick tap is held for at least MIN_HOLD_MS so that it still makes a short hop:
+    // a press and release inside one frame would otherwise cancel out.
+    var MIN_HOLD_MS = 120;
+    var held = false, pressedAt = 0, pendingRelease = null;
+    function press(e) {
+      e.preventDefault();
+      if (held) return;
+      if (pendingRelease) { clearTimeout(pendingRelease); pendingRelease = null; sendKey('keyup', button); }
+      held = true; pressedAt = performance.now(); button.classList.add('held'); sendKey('keydown', button);
+    }
+    function release(e) {
+      e.preventDefault();
+      if (!held) return;
+      held = false; button.classList.remove('held');
+      pendingRelease = setTimeout(function () { pendingRelease = null; sendKey('keyup', button); },
+        Math.max(0, MIN_HOLD_MS - (performance.now() - pressedAt)));
+    }
+    button.addEventListener('pointerdown', press);
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('pointerleave', release);
+    button.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  });
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

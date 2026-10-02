@@ -11,3 +11,7 @@ a.out
 # debugger artifacts
 *.dSYM/
 core
+
+# browser build output (web/build.sh)
+web/build/
+web/arcade-version.txt

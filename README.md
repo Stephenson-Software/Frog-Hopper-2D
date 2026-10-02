@@ -42,6 +42,23 @@ Four cars cross the screen, two travelling right and two travelling left. Each c
 
 From either end screen, pressing and releasing any key returns to the game, and closing the window exits.
 
+## Play in your browser
+
+The game also runs in a web browser, built with [Emscripten](https://emscripten.org):
+
+- https://frog-hopper.play.danielstephenson.dev
+- more games: https://danielstephenson.dev/play
+
+On a keyboard the arrow keys work as in the desktop game. On a phone or tablet, four on-screen arrow buttons appear under the game; hold one to keep moving, or tap it for a short hop. They also leave the win and lose screens. The browser version does not send usage reports.
+
+To build it, install and activate the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html), then run:
+
+```
+web/build.sh
+```
+
+This writes `index.html`, `index.js`, `index.wasm` and `index.data` (the preloaded `resources/`) to `web/build/`. Serve that directory over HTTP to play it locally, e.g. `python3 -m http.server --directory web/build 8000` and open http://localhost:8000. The page itself is `web/shell.html`. The `Browser build` workflow builds it on every pull request and deploys it to the address above.
+
 ## Usage reporting
 
 The game reports to [trace](https://trace.danielstephenson.dev) by default: one `startup` event per launch, carrying the program name (`Frog-Hopper-2D`) and its version from `version.txt`. Nothing about you, your machine, your IP address or the game is sent.
