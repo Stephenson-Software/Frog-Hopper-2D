@@ -70,12 +70,14 @@ Sign-in happens on arcade-social's own page; the game never sees a password, and
 
 ## Usage reporting
 
-The game reports to [trace](https://trace.danielstephenson.dev) by default: one `startup` event per launch, carrying the program name (`Frog-Hopper-2D`) and its version from `version.txt`. Nothing about you, your machine, your IP address or the game is sent.
+The game reports to [trace](https://trace.danielstephenson.dev) by default: one `startup` event per launch, carrying the program name (`Frog-Hopper-2D`), its version from `version.txt`, and a random installation ID. Nothing about you, your machine or the game is sent (the trace server sees the IP address of the request, as every web server does).
 
 The first run prints one line saying so on stderr and writes a small settings file, `usage-reporting.conf`, to `$XDG_CONFIG_HOME/Frog-Hopper-2D/` (by default `~/.config/Frog-Hopper-2D/`; `~/Library/Application Support/Frog-Hopper-2D/` on macOS, `%APPDATA%\Frog-Hopper-2D\` on Windows). To turn reporting off:
 
 - set `enabled=false` in that file, or
 - set `TRACE_USAGE_REPORTING=off` or `DO_NOT_TRACK=1` in the environment (this turns it off for every trace-reporting program, and nothing is printed or written).
+
+The installation ID is a random UUID, made the first time reporting is on and kept in `trace-install-id` in `$XDG_DATA_HOME/frog-hopper-2d/` (by default `~/.local/share/frog-hopper-2d/`; `~/Library/Application Support/frog-hopper-2d/` on macOS, `%APPDATA%\frog-hopper-2d\` on Windows). It is not derived from anything about you or your machine; it only lets trace count installations rather than launches. Delete the file to reset it. Setting `TRACE_INSTALL_ID` sends that value instead, and the file is left alone. Every opt-out above also stops the ID: with reporting off, the file is never created, read or sent.
 
 The event is sent in the background by the vendored [trace-client-cpp](https://github.com/Stephenson-Software/trace-client-cpp) header (`src/header/trace_client.hpp`) through the system `curl`; if curl is missing or the machine is offline, nothing is sent and the game is unaffected. `FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT` points reporting at another server, e.g. a local one while testing. Details: https://github.com/Stephenson-Software/trace#usage-reporting
 
