@@ -1,4 +1,7 @@
 # Frog-Hopper-2D
+
+[![Play in your browser](https://img.shields.io/badge/Play-in%20your%20browser-2ea44f)](https://danielstephenson.dev/play/frog-hopper-2d)
+
 2D game made to practice collision detection and movement. Get the frog across the lanes of traffic to the Pond.
 
 ## Requirements
