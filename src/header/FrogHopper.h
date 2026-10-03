@@ -19,6 +19,10 @@ class FrogHopper {
         void gameScreen();
         bool endScreen(SDL_Texture* texture);
         bool checkWin();
+        void countCrossingFrame();
+        void resetCrossing();
+        double crossingSeconds();
+        void reportCrossing();
 
         SDL_Window* gWindow = NULL;
         SDL_Renderer* gRenderer = NULL;
@@ -28,6 +32,14 @@ class FrogHopper {
 
         // directory the assets are read from, resolved from the location of the executable
         std::string assetPath = "resources/";
+
+        // the current crossing: frames counted since the frog's first move of this attempt
+        bool crossingStarted = false;
+        int crossingFrames = 0;
+        // crossings completed since the game started
+        int crossings = 0;
+        const int FRAMES_PER_SECOND = 60;
+        const double QUICK_CROSSING_SECONDS = 5.0;
 
         // textures
         SDL_Texture* background = NULL;

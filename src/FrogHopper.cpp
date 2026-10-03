@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <cmath>
 #include <iostream>
 #include <string>
 #include "header/FrogHopper.h"
@@ -15,6 +16,18 @@
 // animation frame, which also paces the game like vsync does natively.
 EM_ASYNC_JS(void, waitForNextFrame, (), {
 	await new Promise(function(resolve) { requestAnimationFrame(resolve); });
+});
+
+// High scores and achievements go to arcade-social through arcade-scores.js, which
+// web/shell.html loads from the game's own origin (vendored from
+// https://github.com/Stephenson-Software/arcade-social, clients/js). The client sends
+// nothing unless the page is frog-hopper.play.danielstephenson.dev and the player is
+// signed in, and its calls never throw; the try/catch covers a page without it.
+EM_JS(void, arcadeSubmitScore, (const char* board, double value), {
+	try { if (window.ArcadeScores) window.ArcadeScores.submit(UTF8ToString(board), value); } catch (e) {}
+});
+EM_JS(void, arcadeUnlock, (const char* achievement), {
+	try { if (window.ArcadeScores) window.ArcadeScores.unlock(UTF8ToString(achievement)); } catch (e) {}
 });
 #endif
 
@@ -153,6 +166,44 @@ bool FrogHopper::checkWin() {
 	return frog.ypos < -75;
 }
 
+// the crossing time, in seconds of game time (the frames since the frog's first hop of
+// this attempt at 60 frames a second), rounded to hundredths
+double FrogHopper::crossingSeconds() {
+	return std::round(crossingFrames * 100.0 / FRAMES_PER_SECOND) / 100.0;
+}
+
+// counts this frame towards the crossing once the frog has started moving
+void FrogHopper::countCrossingFrame() {
+	if (frog.xvel != 0 || frog.yvel != 0) {
+		crossingStarted = true;
+	}
+	if (crossingStarted) {
+		crossingFrames++;
+	}
+}
+
+// a new attempt starts after each end screen
+void FrogHopper::resetCrossing() {
+	crossingStarted = false;
+	crossingFrames = 0;
+}
+
+// reports a crossing to the "fastest-crossing" leaderboard and unlocks "first-win" on the
+// first one and "under-five" for one under five seconds (browser build only)
+void FrogHopper::reportCrossing() {
+	double seconds = crossingSeconds();
+	crossings++;
+#ifdef __EMSCRIPTEN__
+	arcadeSubmitScore("fastest-crossing", seconds);
+	if (crossings == 1) {
+		arcadeUnlock("first-win");
+	}
+	if (seconds < QUICK_CROSSING_SECONDS) {
+		arcadeUnlock("under-five");
+	}
+#endif
+}
+
 void FrogHopper::gameScreen() {
 	SDL_Event e;
 	bool running = true;
@@ -166,6 +217,7 @@ void FrogHopper::gameScreen() {
 		SDL_RenderClear(gRenderer);
 		renderScene();
 		frog.move(SCREEN_WIDTH, SCREEN_HEIGHT);
+		countCrossingFrame();
 
 	// if collided with a car
 	if (checkCollision(frog.collider, bottomCarLeft.collider) ||
@@ -175,6 +227,7 @@ void FrogHopper::gameScreen() {
 			frog.xvel = 0;
 			frog.yvel = 0;
 			running = endScreen(loseTexture);
+			resetCrossing();
 		}
 
 		bottomCarRight.move(SCREEN_WIDTH);
@@ -185,7 +238,9 @@ void FrogHopper::gameScreen() {
 		if (running && checkWin()) {
 			frog.xvel = 0;
 			frog.yvel = 0;
+			reportCrossing();
 			running = endScreen(winTexture);
+			resetCrossing();
 		}
 		SDL_RenderPresent(gRenderer);
 #ifdef __EMSCRIPTEN__

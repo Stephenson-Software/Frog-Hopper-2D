@@ -57,7 +57,13 @@ To build it, install and activate the [Emscripten SDK](https://emscripten.org/do
 web/build.sh
 ```
 
-This writes `index.html`, `index.js`, `index.wasm` and `index.data` (the preloaded `resources/`) to `web/build/`. Serve that directory over HTTP to play it locally, e.g. `python3 -m http.server --directory web/build 8000` and open http://localhost:8000. The page itself is `web/shell.html`. The `Browser build` workflow builds it on every pull request and deploys it to the address above.
+This writes `index.html`, `index.js`, `index.wasm`, `index.data` (the preloaded `resources/`) and `arcade-scores.js` (see below) to `web/build/`. Serve that directory over HTTP to play it locally, e.g. `python3 -m http.server --directory web/build 8000` and open http://localhost:8000. The page itself is `web/shell.html`. The `Browser build` workflow builds it on every pull request and deploys it to the address above.
+
+### High scores
+
+In the browser version, a signed-in player's crossing times go to the "Fastest crossing" leaderboard (`fastest-crossing`, lower is better) of [arcade-social](https://github.com/Stephenson-Software/arcade-social) at `https://api.play.danielstephenson.dev`. A crossing is timed in game time: the frames from the frog's first move of the attempt until it reaches the pond, at 60 frames a second, in seconds to two decimals (holding up from the start, about 3.13 s, is the fastest possible). Every crossing is sent and the service keeps each player's best. Two achievements are unlocked too: `first-win` (the first crossing) and `under-five` (a crossing under five seconds).
+
+Sign-in happens on arcade-social's own page; the game never sees a password, and nothing is sent while signed out, from any address other than https://frog-hopper.play.danielstephenson.dev, or from the desktop game (the calls are compiled only under `__EMSCRIPTEN__`). Scores are reported by the player's browser and can be forged, so the board is labelled "not verified". The client is `web/arcade-scores.js`, vendored unchanged from arcade-social's `clients/js`; `web/build.sh` copies it next to the page, `web/shell.html` loads it, and `src/FrogHopper.cpp` calls it through `EM_JS`. Its calls never throw: a refused or lost score is dropped and the game carries on.
 
 ## Usage reporting
 

@@ -21,5 +21,8 @@ em++ -O2 -std=c++17 \
   --shell-file web/shell.html \
   -o "$out/index.html"
 
+# the arcade-social scores client, loaded by web/shell.html from the game's own origin
+cp web/arcade-scores.js "$out/arcade-scores.js"
+
 echo "Built $out:"
 ls -l "$out"
