@@ -33,19 +33,19 @@ EM_JS(void, arcadeUnlock, (const char* achievement), {
 
 FrogHopper::FrogHopper() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		std::cout << "SDL could not initialize: " << SDL_GetError() << std::endl;
+		std::cerr << "SDL could not initialize: " << SDL_GetError() << std::endl;
 		return;
 	}
 
 	gWindow = SDL_CreateWindow("Frog Hopper", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 	if (gWindow == NULL) {
-		std::cout << "Window could not be created: " << SDL_GetError() << std::endl;
+		std::cerr << "Window could not be created: " << SDL_GetError() << std::endl;
 		return;
 	}
 
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (gRenderer == NULL) {
-		std::cout << "Renderer could not be created: " << SDL_GetError() << std::endl;
+		std::cerr << "Renderer could not be created: " << SDL_GetError() << std::endl;
 		return;
 	}
 
@@ -67,7 +67,7 @@ FrogHopper::FrogHopper() {
 	//  initialize PNG loading
 	int imgFlags = IMG_INIT_PNG;
 	if ((IMG_Init(imgFlags) & imgFlags) != imgFlags) {
-		std::cout << "SDL_image could not initialize: " << IMG_GetError() << std::endl;
+		std::cerr << "SDL_image could not initialize: " << IMG_GetError() << std::endl;
 		return;
 	}
 
@@ -80,7 +80,7 @@ SDL_Texture* FrogHopper::loadTexture(std::string fileName, bool useColorKey) {
 
 	SDL_Surface* temp_surface = IMG_Load(path.c_str());
 	if (temp_surface == NULL) {
-		std::cout << "Could not load " << path << ": " << IMG_GetError() << std::endl;
+		std::cerr << "Could not load " << path << ": " << IMG_GetError() << std::endl;
 		return NULL;
 	}
 
@@ -90,7 +90,7 @@ SDL_Texture* FrogHopper::loadTexture(std::string fileName, bool useColorKey) {
 
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(gRenderer, temp_surface);
 	if (texture == NULL) {
-		std::cout << "Could not create a texture from " << path << ": " << SDL_GetError() << std::endl;
+		std::cerr << "Could not create a texture from " << path << ": " << SDL_GetError() << std::endl;
 	}
 
 	SDL_FreeSurface(temp_surface);
@@ -289,13 +289,13 @@ int main(int argc, char* args[]) {
 
 	FrogHopper frogHopper;
 	if (!frogHopper.initialized) {
-		std::cout << "Frog Hopper could not start up." << std::endl;
+		std::cerr << "Frog Hopper could not start up." << std::endl;
 		frogHopper.cleanUp();
 		return 1;
 	}
 
 	if (!frogHopper.loadMedia()) {
-		std::cout << "Frog Hopper could not load its assets." << std::endl;
+		std::cerr << "Frog Hopper could not load its assets." << std::endl;
 		frogHopper.cleanUp();
 		return 1;
 	}
