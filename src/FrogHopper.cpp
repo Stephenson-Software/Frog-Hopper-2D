@@ -219,11 +219,11 @@ void FrogHopper::gameScreen() {
 		frog.move(SCREEN_WIDTH, SCREEN_HEIGHT);
 		countCrossingFrame();
 
-	// if collided with a car, unless the window was closed this frame
-	if (running && (checkCollision(frog.collider, bottomCarLeft.collider) ||
-		checkCollision(frog.collider, topCarLeft.collider) ||
-		checkCollision(frog.collider, bottomCarRight.collider) ||
-		checkCollision(frog.collider, topCarRight.collider))) {
+		// if collided with a car, unless the window was closed this frame
+		if (running && (checkCollision(frog.collider, bottomCarLeft.collider) ||
+			checkCollision(frog.collider, topCarLeft.collider) ||
+			checkCollision(frog.collider, bottomCarRight.collider) ||
+			checkCollision(frog.collider, topCarRight.collider))) {
 			frog.xvel = 0;
 			frog.yvel = 0;
 			running = endScreen(loseTexture);
