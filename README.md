@@ -43,7 +43,7 @@ Four cars cross the screen, two travelling right and two travelling left. Each c
 - Touching a car ends the run and shows the lose screen.
 - Moving the frog off the top of the screen shows the win screen.
 
-From either end screen, pressing and releasing any key returns to the game, and closing the window exits.
+From either end screen, releasing any key returns to the game, and closing the window exits. A key that was already held when the screen appeared counts too, so letting go of an arrow key held into a car or across the top dismisses the screen straight away.
 
 ## Play in your browser
 
