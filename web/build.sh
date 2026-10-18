@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the browser version into web/build/ (index.html, index.js, index.wasm,
-# index.data). Needs Emscripten's em++ on PATH (source emsdk_env.sh first).
+# index.data, arcade-scores.js). Needs Emscripten's em++ on PATH (source emsdk_env.sh first).
 # The native build (make) is unaffected.
 set -euo pipefail
 cd "$(dirname "$0")/.."

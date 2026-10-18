@@ -79,7 +79,7 @@ The first run prints one line saying so on stderr and writes a small settings fi
 
 The installation ID is a random UUID, made the first time reporting is on and kept in `trace-install-id` in `$XDG_DATA_HOME/frog-hopper-2d/` (by default `~/.local/share/frog-hopper-2d/`; `~/Library/Application Support/frog-hopper-2d/` on macOS, `%APPDATA%\frog-hopper-2d\` on Windows). It is not derived from anything about you or your machine; it only lets trace count installations rather than launches. Delete the file to reset it. Setting `TRACE_INSTALL_ID` sends that value instead, and the file is left alone. Every opt-out above also stops the ID: with reporting off, the file is never created, read or sent.
 
-The event is sent in the background by the vendored [trace-client-cpp](https://github.com/Stephenson-Software/trace-client-cpp) header (`src/header/trace_client.hpp`) through the system `curl`; if curl is missing or the machine is offline, nothing is sent and the game is unaffected. `FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT` points reporting at another server, e.g. a local one while testing. Details: https://github.com/Stephenson-Software/trace#usage-reporting
+The event is sent in the background by the vendored [trace-client-cpp](https://github.com/Stephenson-Software/trace-client-cpp) header (`src/header/trace_client.hpp`) through the system `curl`; if curl is missing or the machine is offline, nothing is sent and the game is unaffected. `FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT` points reporting at another server, e.g. a local one while testing. An `endpoint=` line in the settings file does the same, and the environment variable wins when both are set. Details: https://github.com/Stephenson-Software/trace#usage-reporting
 
 ## License
 
