@@ -19,7 +19,7 @@ class FrogHopper {
         void gameScreen();
         bool endScreen(SDL_Texture* texture);
         bool checkWin();
-        void countCrossingFrame();
+        void countCrossingFrame(bool frogMoved);
         void resetCrossing();
         double crossingSeconds();
         void reportCrossing();

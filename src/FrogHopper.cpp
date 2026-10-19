@@ -172,9 +172,10 @@ double FrogHopper::crossingSeconds() {
 	return std::round(crossingFrames * 100.0 / FRAMES_PER_SECOND) / 100.0;
 }
 
-// counts this frame towards the crossing once the frog has started moving
-void FrogHopper::countCrossingFrame() {
-	if (frog.xvel != 0 || frog.yvel != 0) {
+// counts this frame towards the crossing once the frog has started moving. a held key that
+// only pushes the frog against an edge (e.g. down at the start) does not start it
+void FrogHopper::countCrossingFrame(bool frogMoved) {
+	if (frogMoved) {
 		crossingStarted = true;
 	}
 	if (crossingStarted) {
@@ -216,8 +217,10 @@ void FrogHopper::gameScreen() {
 		}
 		SDL_RenderClear(gRenderer);
 		renderScene();
+		int lastFrogX = frog.xpos;
+		int lastFrogY = frog.ypos;
 		frog.move(SCREEN_WIDTH, SCREEN_HEIGHT);
-		countCrossingFrame();
+		countCrossingFrame(frog.xpos != lastFrogX || frog.ypos != lastFrogY);
 
 		// if collided with a car, unless the window was closed this frame
 		if (running && (checkCollision(frog.collider, bottomCarLeft.collider) ||
