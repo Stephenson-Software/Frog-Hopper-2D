@@ -45,6 +45,8 @@ Four cars cross the screen, two travelling right and two travelling left. Each c
 
 From either end screen, releasing any key returns to the game, and closing the window exits. A key that was already held when the screen appeared counts too, so letting go of an arrow key held into a car or across the top dismisses the screen straight away.
 
+Play then picks up where it stopped: the frog goes back to the bottom of the screen, standing still in the column it was in, and the cars carry on from where they were. Each return starts a new attempt, so the crossing time (see "High scores" below) counts again from the frog's next move.
+
 ## Play in your browser
 
 The game also runs in a web browser, built with [Emscripten](https://emscripten.org):
