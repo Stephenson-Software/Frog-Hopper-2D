@@ -62,7 +62,7 @@ To build it, install and activate the [Emscripten SDK](https://emscripten.org/do
 web/build.sh
 ```
 
-This writes `index.html`, `index.js`, `index.wasm`, `index.data` (the preloaded `resources/`) and `arcade-scores.js` (see below) to `web/build/`. Serve that directory over HTTP to play it locally, e.g. `python3 -m http.server --directory web/build 8000` and open http://localhost:8000. The page itself is `web/shell.html`. The `Browser build` workflow builds it on every pull request and deploys it to the address above.
+This writes `index.html`, `index.js`, `index.wasm`, `index.data` (the preloaded `resources/`) and `arcade-scores.js` (see below) to `web/build/`. Serve that directory over HTTP to play it locally, e.g. `python3 -m http.server --directory web/build 8000` and open http://localhost:8000. The page itself is `web/shell.html`. The `Browser build` workflow builds it on every pull request and every push to `master`. It deploys to https://frog-hopper.play.danielstephenson.dev only on a push to `master` while the repository variable `ARCADE_ENABLED` is `true`, or when the workflow is run by hand; the runs a pull request triggers never deploy.
 
 ### High scores
 
