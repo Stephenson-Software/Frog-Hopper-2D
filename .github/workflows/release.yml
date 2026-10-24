@@ -1,0 +1,298 @@
+# Builds the desktop game for Linux x64 and Windows x64 and attaches the
+# downloads to a GitHub release. macOS is not built.
+#
+#   - Pushing a version tag (v1.1.0: a "v" and three numbers, as the one
+#     earlier release, v1.0, was named) or publishing a release on one builds
+#     both and uploads them to that release. A pushed tag with no release yet
+#     gets a full release created for it (v1.0 is a full release).
+#   - A pull request that changes this workflow, the Makefile or version.txt
+#     runs the same builds as a dry run, so a packaging change is checked
+#     before it merges.
+#   - workflow_dispatch builds both from the chosen branch and keeps them as
+#     workflow artifacts. Give it a tag to build that tag and attach the
+#     builds to its existing release instead.
+#
+# The tag must be "v" followed by the version in version.txt. See
+# docs/RELEASING.md.
+name: Release
+
+on:
+  release:
+    types: [published]
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "Makefile"
+      - "version.txt"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build and attach to (empty = dry run: workflow artifacts only)"
+        required: false
+        default: ""
+
+# A release created with gh release create also pushes its tag, so both events
+# fire for one release. Keyed on the tag, the later run replaces the earlier.
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Nothing here may count as a use of the game (see the README's "Usage reporting").
+env:
+  TRACE_USAGE_REPORTING: "off"
+
+jobs:
+  meta:
+    name: Resolve the version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      ref: ${{ steps.resolve.outputs.ref }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Resolve tag and ref
+        id: resolve
+        env:
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$EVENT" in
+            release)           tag="$RELEASE_TAG" ;;
+            push)              tag="$REF_NAME" ;;
+            workflow_dispatch) tag="$INPUT_TAG" ;;
+            *)                 tag="" ;;
+          esac
+          if [ -n "$tag" ]; then
+            if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Release tags are a v and three numbers, such as v1.1.0, not '$tag'."
+              exit 1
+            fi
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "ref=refs/tags/$tag" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.ref }}
+
+      # The version the game reports to usage reporting is version.txt, so it
+      # must be the version the download is released as.
+      - name: Read the version and check it against the tag
+        id: version
+        env:
+          TAG: ${{ steps.resolve.outputs.tag }}
+        run: |
+          version=$(tr -d '[:space:]' < version.txt)
+          if [ -z "$version" ]; then
+            echo "::error::version.txt is empty."
+            exit 1
+          fi
+          if [ -n "$TAG" ] && [ "v$version" != "$TAG" ]; then
+            echo "::error::version.txt says $version but the tag is $TAG. Set version.txt first (docs/RELEASING.md)."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Building Frog Hopper $version (tag: ${TAG:-none, dry run})"
+
+  linux:
+    name: Linux x64 build
+    needs: meta
+    # The oldest supported runner, so the download runs on older glibc too.
+    runs-on: ubuntu-22.04
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.ref }}
+
+      - name: Install SDL2 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-image-dev
+
+      - name: Build (Makefile)
+        run: make
+
+      - name: Assemble the package
+        run: |
+          dir="dist/FrogHopper2D-$VERSION-linux-x64"
+          mkdir -p "$dir"
+          cp frogHopper_executable "$dir/frogHopper_executable"
+          strip "$dir/frogHopper_executable"
+          cp -r resources "$dir/resources"
+          cp LICENSE "$dir/LICENSE.txt"
+          cp docs/README-download.txt "$dir/README.txt"
+          # SDL2 and SDL2_image come from the system (README.txt says which
+          # packages, and they bring their own dependencies); the executable
+          # itself may need nothing else outside the C and C++ runtime.
+          readelf -d "$dir/frogHopper_executable" | grep NEEDED
+          if readelf -d "$dir/frogHopper_executable" | grep NEEDED \
+              | grep -Ev '\[lib(c|m|dl|pthread|rt|stdc\+\+|gcc_s)\.so|\[libSDL2-2\.0\.so|\[libSDL2_image-2\.0\.so'; then
+            echo "::error::The game links a library the download's README does not name."
+            exit 1
+          fi
+
+      # The packaged game, started from another directory, must find its
+      # resources next to the executable and keep running (it exits at once,
+      # with "could not load its assets", when they are missing). The dummy
+      # video driver and the software renderer need no display.
+      - name: The packaged game starts and keeps running
+        run: |
+          cd "$RUNNER_TEMP"
+          set +e
+          SDL_VIDEODRIVER=dummy SDL_RENDER_DRIVER=software \
+            timeout 10 "$GITHUB_WORKSPACE/dist/FrogHopper2D-$VERSION-linux-x64/frogHopper_executable"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 124 ]; then
+            echo "::error::The packaged game exited with $rc instead of running until stopped."
+            exit 1
+          fi
+
+      - name: Archive
+        run: |
+          cd dist
+          tar -czf "FrogHopper2D-$VERSION-linux-x64.tar.gz" "FrogHopper2D-$VERSION-linux-x64"
+          sha256sum "FrogHopper2D-$VERSION-linux-x64.tar.gz" > "FrogHopper2D-$VERSION-linux-x64.tar.gz.sha256"
+          ls -l
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrogHopper2D-${{ env.VERSION }}-linux-x64
+          path: |
+            dist/FrogHopper2D-${{ env.VERSION }}-linux-x64.tar.gz
+            dist/FrogHopper2D-${{ env.VERSION }}-linux-x64.tar.gz.sha256
+          if-no-files-found: error
+
+  windows:
+    name: Windows x64 build
+    needs: meta
+    runs-on: windows-2022
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+      MSYSTEM: MINGW64
+      CHERE_INVOKING: "1"
+    defaults:
+      run:
+        # The MSYS2 the runner image carries; the MinGW-w64 toolchain and SDL2
+        # come from its package manager.
+        shell: C:\msys64\usr\bin\bash.exe -leo pipefail {0}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.ref }}
+
+      - name: Install the MinGW-w64 toolchain and SDL2
+        run: |
+          pacman -S --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf \
+            mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image
+
+      # The Makefile's command, with MinGW's SDL2main and libgcc/libstdc++
+      # linked in statically, so the download needs no MinGW runtime DLL.
+      - name: Build
+        run: |
+          g++ -O2 -pthread -DFROG_HOPPER_VERSION="\"$VERSION\"" src/Frog.cpp src/FrogHopper.cpp src/Vehicle.cpp \
+            $(pkg-config --cflags sdl2 SDL2_image) -static-libgcc -static-libstdc++ \
+            -lmingw32 -lSDL2main $(pkg-config --libs sdl2 SDL2_image | sed 's/-lmingw32//; s/-lSDL2main//') \
+            -o frogHopper.exe
+
+      # SDL2, SDL2_image and the image libraries it loads are shipped next to
+      # the executable: every DLL it needs from /mingw64/bin, found with ldd.
+      - name: Assemble the package
+        run: |
+          dir="dist/FrogHopper2D-$VERSION-win-x64"
+          mkdir -p "$dir"
+          cp frogHopper.exe "$dir/frogHopper.exe"
+          strip "$dir/frogHopper.exe"
+          cp -r resources "$dir/resources"
+          cp LICENSE "$dir/LICENSE.txt"
+          cp docs/README-download.txt "$dir/README.txt"
+          ldd "$dir/frogHopper.exe"
+          ldd "$dir/frogHopper.exe" | awk '$3 ~ /^\/mingw64\/bin\// {print $3}' | sort -u | xargs -r -I{} cp {} "$dir/"
+          # SDL2_image opens its format libraries on demand; ship the PNG one's
+          # chain too (the game's assets are PNGs).
+          for dll in /mingw64/bin/libpng16-16.dll /mingw64/bin/zlib1.dll; do
+            [ -f "$dll" ] && cp -n "$dll" "$dir/"
+          done
+          ls -l "$dir"
+
+      # Run with only the download's DLLs on PATH: it must find its resources
+      # and keep running (it exits at once when anything is missing).
+      - name: The packaged game starts and keeps running
+        shell: pwsh
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_RENDER_DRIVER: software
+        run: |
+          $dir = (Resolve-Path "dist/FrogHopper2D-$env:VERSION-win-x64").Path
+          $env:PATH = "$dir;C:\Windows\System32;C:\Windows"
+          $p = Start-Process -FilePath "$dir\frogHopper.exe" -WorkingDirectory $env:RUNNER_TEMP -PassThru `
+            -RedirectStandardError "$env:RUNNER_TEMP\stderr.txt"
+          Start-Sleep -Seconds 10
+          Get-Content "$env:RUNNER_TEMP\stderr.txt" -ErrorAction SilentlyContinue
+          if ($p.HasExited) { Write-Error "frogHopper.exe exited with $($p.ExitCode) instead of running until stopped."; exit 1 }
+          Stop-Process -Id $p.Id -Force
+
+      - name: Archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/FrogHopper2D-$env:VERSION-win-x64" `
+            -DestinationPath "dist/FrogHopper2D-$env:VERSION-win-x64.zip"
+          $hash = (Get-FileHash "dist/FrogHopper2D-$env:VERSION-win-x64.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  FrogHopper2D-$env:VERSION-win-x64.zip" | Out-File -Encoding ascii -NoNewline "dist/FrogHopper2D-$env:VERSION-win-x64.zip.sha256"
+          Get-ChildItem dist
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrogHopper2D-${{ env.VERSION }}-win-x64
+          path: |
+            dist/FrogHopper2D-${{ env.VERSION }}-win-x64.zip
+            dist/FrogHopper2D-${{ env.VERSION }}-win-x64.zip.sha256
+          if-no-files-found: error
+
+  attach:
+    name: Attach to the release
+    needs: [meta, linux, windows]
+    if: needs.meta.outputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.meta.outputs.tag }}
+    steps:
+      - name: Download the packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # A tag pushed on its own has no release yet; one is made, as a full
+      # release like v1.0. A release made with GITHUB_TOKEN does not start
+      # this workflow again.
+      - name: Make sure the release exists
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --generate-notes --title "Frog Hopper $TAG"
+          fi
+
+      - name: Upload to the release
+        run: |
+          ls -l dist
+          gh release upload "$TAG" dist/* --clobber
