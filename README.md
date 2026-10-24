@@ -47,6 +47,10 @@ From either end screen, releasing any key returns to the game, and closing the w
 
 Play then picks up where it stopped: the frog goes back to the bottom of the screen, standing still in the column it was in, and the cars carry on from where they were. Each return starts a new attempt, so the crossing time (see "High scores" below) counts again from the frog's next move.
 
+## Downloads
+
+Each [release](https://github.com/Stephenson-Software/Frog-Hopper-2D/releases) from `v1.1.0` on carries a Windows x64 zip and a Linux x64 tarball, each with a `.sha256`. The Linux build needs the system's SDL2 and SDL2_image (`sudo apt-get install libsdl2-2.0-0 libsdl2-image-2.0-0`); the Windows zip carries its DLLs. How releases are made: [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Play in your browser
 
 The game also runs in a web browser, built with [Emscripten](https://emscripten.org):
