@@ -135,9 +135,11 @@ jobs:
           cp LICENSE "$dir/LICENSE.txt"
           cp docs/README-download.txt "$dir/README.txt"
           # SDL2 and SDL2_image come from the system (README.txt says which
-          # packages); nothing else outside the C and C++ runtime may be linked.
-          ldd "$dir/frogHopper_executable"
-          if ldd "$dir/frogHopper_executable" | grep -Ev 'linux-vdso|ld-linux|/lib/x86_64-linux-gnu/lib(c|m|dl|pthread|rt|stdc\+\+|gcc_s|SDL2-2\.0|SDL2_image-2\.0)\.so'; then
+          # packages, and they bring their own dependencies); the executable
+          # itself may need nothing else outside the C and C++ runtime.
+          readelf -d "$dir/frogHopper_executable" | grep NEEDED
+          if readelf -d "$dir/frogHopper_executable" | grep NEEDED \
+              | grep -Ev '\[lib(c|m|dl|pthread|rt|stdc\+\+|gcc_s)\.so|\[libSDL2-2\.0\.so|\[libSDL2_image-2\.0\.so'; then
             echo "::error::The game links a library the download's README does not name."
             exit 1
           fi

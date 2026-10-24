@@ -36,8 +36,8 @@ full release created for it, with generated notes.
 
 ## What each build checks
 
-- **Linux** (built on Ubuntu 22.04): the executable links nothing but the C and C++ runtime and
-  the system's SDL2 and SDL2_image, which `README.txt` names. Started from another directory with
+- **Linux** (built on Ubuntu 22.04): the executable needs (`readelf -d`) nothing but the C and C++
+  runtime and the system's SDL2 and SDL2_image, which `README.txt` names. Started from another directory with
   SDL's dummy video driver, the packaged game finds its resources and keeps running.
 - **Windows** (MSYS2 MinGW-w64): the DLLs the executable needs are copied next to it, and the
   same start-up check runs with only those DLLs on `PATH`.
