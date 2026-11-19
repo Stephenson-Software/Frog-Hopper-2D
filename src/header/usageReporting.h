@@ -23,7 +23,7 @@
 // resets it; TRACE_INSTALL_ID, when set and not blank, is sent instead and the
 // file is left alone. The client only reads or writes the file when reporting
 // is on, so every opt-out above also stops it.
-// Details: https://github.com/Stephenson-Software/trace#usage-reporting
+// Details: https://danielstephenson.dev/usage-reporting
 #ifndef FROG_HOPPER_2D_USAGE_REPORTING_H
 #define FROG_HOPPER_2D_USAGE_REPORTING_H
 
@@ -51,7 +51,7 @@ static const char *const DEFAULT_ENDPOINT = "https://trace.danielstephenson.dev"
 // it; it is scoped to reporting only and is not a secret (it ships in every
 // copy of the program).
 static const char *const KEY = "_HIs3VODmbtYzwsYT6ryy97XTbr4jSyTHk92Uk1PsRM";
-static const char *const DETAILS_URL = "https://github.com/Stephenson-Software/trace#usage-reporting";
+static const char *const DETAILS_URL = "https://danielstephenson.dev/usage-reporting";
 // Points reporting at another server, e.g. a local stub while testing.
 static const char *const ENV_ENDPOINT = "FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT";
 static const char *const SETTINGS_FILENAME = "usage-reporting.conf";
