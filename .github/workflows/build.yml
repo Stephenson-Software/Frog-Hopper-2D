@@ -1,4 +1,4 @@
-# The game has no test suite; this proves it still builds with the Makefile.
+# The game has no test suite beyond the usage-reporting check; this proves it still builds with the Makefile.
 name: Build
 
 on:
@@ -23,3 +23,9 @@ jobs:
         run: make
       - name: Check the executable exists
         run: test -x frogHopper_executable
+      - name: Check the usage-reporting switch
+        # Needs no SDL; checks that off, no, 0, a blank value, a typo or an
+        # unreadable settings file all keep reporting off. Sends nothing.
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -pthread test/usageReportingTest.cpp -o usageReportingTest
+          ./usageReportingTest

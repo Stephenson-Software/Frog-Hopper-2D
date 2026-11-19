@@ -83,9 +83,11 @@ The first run prints one line saying so on stderr and writes a small settings fi
 - set `enabled=false` in that file, or
 - set `TRACE_USAGE_REPORTING=off` or `DO_NOT_TRACK=1` in the environment (this turns it off for every trace-reporting program, and nothing is printed or written).
 
+Every switch fails closed. `enabled=` keeps reporting on only when it is `true`, `on`, `yes` or `1` (in any case); `false`, `off`, `no`, `0`, a blank value or a typo turn it off, and so does a settings file that is there but cannot be read (it is never overwritten). `TRACE_USAGE_REPORTING` set to anything but blank, `true`, `on`, `yes` or `1` turns reporting off, and so does `DO_NOT_TRACK` set to anything but blank, `0`, `false`, `off` or `no`. `test/usageReportingTest.cpp` checks this.
+
 The installation ID is a random UUID, made the first time reporting is on and kept in `trace-install-id` in `$XDG_DATA_HOME/frog-hopper-2d/` (by default `~/.local/share/frog-hopper-2d/`; `~/Library/Application Support/frog-hopper-2d/` on macOS, `%APPDATA%\frog-hopper-2d\` on Windows). It is not derived from anything about you or your machine; it only lets trace count installations rather than launches. Delete the file to reset it. Setting `TRACE_INSTALL_ID` sends that value instead, and the file is left alone. Every opt-out above also stops the ID: with reporting off, the file is never created, read or sent.
 
-The event is sent in the background by the vendored [trace-client-cpp](https://github.com/Stephenson-Software/trace-client-cpp) header (`src/header/trace_client.hpp`) through the system `curl`; if curl is missing or the machine is offline, nothing is sent and the game is unaffected. `FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT` points reporting at another server, e.g. a local one while testing. An `endpoint=` line in the settings file does the same, and the environment variable wins when both are set. Details: https://github.com/Stephenson-Software/trace#usage-reporting
+The event is sent in the background by the vendored [trace-client-cpp](https://github.com/Stephenson-Software/trace-client-cpp) header (`src/header/trace_client.hpp`) through the system `curl`; if curl is missing or the machine is offline, nothing is sent and the game is unaffected. `FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT` points reporting at another server, e.g. a local one while testing. An `endpoint=` line in the settings file does the same, and the environment variable wins when both are set. Details: https://danielstephenson.dev/usage-reporting
 
 ## License
 

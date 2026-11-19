@@ -23,7 +23,7 @@
 // resets it; TRACE_INSTALL_ID, when set and not blank, is sent instead and the
 // file is left alone. The client only reads or writes the file when reporting
 // is on, so every opt-out above also stops it.
-// Details: https://github.com/Stephenson-Software/trace#usage-reporting
+// Details: https://danielstephenson.dev/usage-reporting
 #ifndef FROG_HOPPER_2D_USAGE_REPORTING_H
 #define FROG_HOPPER_2D_USAGE_REPORTING_H
 
@@ -37,10 +37,9 @@
 
 #if defined(_WIN32)
 #include <direct.h>
-#else
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
-#endif
 
 namespace usage_reporting {
 
@@ -52,7 +51,7 @@ static const char *const DEFAULT_ENDPOINT = "https://trace.danielstephenson.dev"
 // it; it is scoped to reporting only and is not a secret (it ships in every
 // copy of the program).
 static const char *const KEY = "_HIs3VODmbtYzwsYT6ryy97XTbr4jSyTHk92Uk1PsRM";
-static const char *const DETAILS_URL = "https://github.com/Stephenson-Software/trace#usage-reporting";
+static const char *const DETAILS_URL = "https://danielstephenson.dev/usage-reporting";
 // Points reporting at another server, e.g. a local stub while testing.
 static const char *const ENV_ENDPOINT = "FROG_HOPPER_2D_USAGE_REPORTING_ENDPOINT";
 static const char *const SETTINGS_FILENAME = "usage-reporting.conf";
@@ -180,7 +179,21 @@ inline trace_client::InstallId installIdSource() {
     return path.empty() ? trace_client::InstallId() : trace_client::InstallId::fromFile(path);
 }
 
-/** What the settings file says. Anything unreadable leaves reporting on. */
+/**
+ * Whether anything (a file, a directory) is at path. Used to tell a settings
+ * file that is missing from one that is there but cannot be read.
+ */
+inline bool pathExists(const std::string &path) {
+    struct stat info;
+    return !path.empty() && stat(path.c_str(), &info) == 0;
+}
+
+/**
+ * What the settings file says. Fails closed: enabled= keeps reporting on only
+ * when it reads true, on, yes or 1 (trace_client::allowsReporting), so false,
+ * off, no, 0, a blank value or a typo turn it off; a file that is there but
+ * cannot be read turns reporting off too, and is never overwritten.
+ */
 struct Settings {
     bool exists;
     bool enabled;
@@ -192,7 +205,14 @@ inline Settings readSettings(const std::string &path) {
     Settings settings;
     if (path.empty()) return settings;
     std::ifstream in(path.c_str());
-    if (!in) return settings;
+    if (!in) {
+        if (pathExists(path)) {
+            // It may say enabled=false: count it as off, and leave it alone.
+            settings.exists = true;
+            settings.enabled = false;
+        }
+        return settings;
+    }
     settings.exists = true;
     std::string line;
     while (std::getline(in, line)) {
@@ -203,11 +223,15 @@ inline Settings readSettings(const std::string &path) {
         std::string name = lowered(trim(line.substr(0, equals)));
         std::string value = trim(line.substr(equals + 1));
         if (name == "enabled") {
-            std::string v = lowered(value);
-            settings.enabled = !(v == "false" || v == "off" || v == "no" || v == "0");
+            settings.enabled = trace_client::allowsReporting(value);
         } else if (name == "endpoint") {
             settings.endpoint = value;
         }
+    }
+    if (in.bad()) {
+        // A read error part-way (or a directory where the file should be): what
+        // was not read may say enabled=false, so count it as off.
+        settings.enabled = false;
     }
     return settings;
 }
