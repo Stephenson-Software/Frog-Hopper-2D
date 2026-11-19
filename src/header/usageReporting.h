@@ -201,6 +201,41 @@ struct Settings {
     Settings() : exists(false), enabled(true) {}
 };
 
+/**
+ * A settings key in lower case with everything but letters and digits dropped,
+ * so usage_reporting, usage-reporting and usageReporting all read
+ * usagereporting.
+ */
+inline std::string normalisedKey(const std::string &key) {
+    std::string out;
+    for (std::size_t i = 0; i < key.size(); ++i) {
+        char c = key[i];
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) out += c;
+    }
+    return out;
+}
+
+/**
+ * Whether a line other than enabled= is an attempt to turn reporting off. Such
+ * a line used to be ignored, so with the enabled line missing (or still at its
+ * default, true) reporting stayed on. Someone who wrote any of these did not
+ * ask for reporting, so each counts as off: a key that spells "enabled" another
+ * way (enable, usage_reporting.enabled, ...) whose value is not clearly on; one
+ * that spells "disabled" (disabled, disable, ...) whose value is on; and
+ * usage_reporting= (any spelling) given a value that is not clearly on.
+ */
+inline bool isNearMissOptOut(const std::string &name, const std::string &value) {
+    if (name == "enabled") return false; // the switch itself
+    std::string key = normalisedKey(name);
+    if (key.find("disabl") != std::string::npos) return trace_client::allowsReporting(value);
+    const std::string usageReporting = "usagereporting";
+    bool namesTheBlock = key.size() >= usageReporting.size()
+        && key.compare(key.size() - usageReporting.size(), usageReporting.size(), usageReporting) == 0;
+    if (key.find("enabl") != std::string::npos || namesTheBlock) return !trace_client::allowsReporting(value);
+    return false;
+}
+
 inline Settings readSettings(const std::string &path) {
     Settings settings;
     if (path.empty()) return settings;
@@ -214,6 +249,7 @@ inline Settings readSettings(const std::string &path) {
         return settings;
     }
     settings.exists = true;
+    bool nearMissOptOut = false;
     std::string line;
     while (std::getline(in, line)) {
         line = trim(line);
@@ -226,8 +262,12 @@ inline Settings readSettings(const std::string &path) {
             settings.enabled = trace_client::allowsReporting(value);
         } else if (name == "endpoint") {
             settings.endpoint = value;
+        } else if (isNearMissOptOut(name, value)) {
+            nearMissOptOut = true;
         }
     }
+    // An opt-out written another way wins over enabled=true (or no enabled line).
+    if (nearMissOptOut) settings.enabled = false;
     if (in.bad()) {
         // A read error part-way (or a directory where the file should be): what
         // was not read may say enabled=false, so count it as off.
